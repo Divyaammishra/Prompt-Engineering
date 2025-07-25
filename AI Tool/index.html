@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Log Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .card h2 {
+            color: #2a5298;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            background: #2a5298;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+        }
+
+        textarea,
+        input,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        textarea:focus,
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #2a5298;
+            box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
+        }
+
+        textarea {
+            height: 200px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button.secondary {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .result-card h3 {
+            color: #2a5298;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .anomaly-item {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .anomaly-score {
+            font-weight: bold;
+            float: right;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .log-pattern {
+            background: #f8f9fa;
+            border-left: 4px solid #2a5298;
+            padding: 10px;
+            margin: 8px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .severity-high {
+            border-left-color: #dc3545;
+        }
+
+        .severity-medium {
+            border-left-color: #fd7e14;
+        }
+
+        .severity-low {
+            border-left-color: #28a745;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2a5298;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .file-upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            background: #f9f9f9;
+            margin: 15px 0;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-area:hover {
+            border-color: #2a5298;
+            background: #f0f4f8;
+        }
+
+        .file-upload-area.dragover {
+            border-color: #2a5298;
+            background: #e3f2fd;
+            transform: scale(1.02);
+        }
+
+        .file-info {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #2e7d32;
+        }
+
+        .file-error {
+            background: #ffebee;
+            border: 1px solid #f44336;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #c62828;
+        }
+
+        .processing-indicator {
+            display: none;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #856404;
+        }
+
+        @media (max-width: 768px) {
+
+            .main-grid,
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Log Analyzer</h1>
+            <p>Automated Log Summarization & Anomaly Detection System</p>
+        </div>
+
+        <div class="main-grid">
+            <div class="card">
+                <h2><span class="icon">📝</span>Log Input & Configuration</h2>
+
+                <div class="input-section">
+                    <label for="logInput">System Logs:</label>
+                    <textarea id="logInput"
+                        placeholder="Paste your system logs here or upload a file below...&#10;&#10;Example:&#10;2024-07-24 10:15:23 [INFO] Application started successfully&#10;2024-07-24 10:15:24 [ERROR] Database connection failed&#10;2024-07-24 10:15:25 [WARN] Retrying database connection..."></textarea>
+
+                    <div
+                        style="margin: 15px 0; padding: 15px; border: 2px dashed #ccc; border-radius: 8px; text-align: center; background: #f9f9f9;">
+                        <input type="file" id="fileInput" accept=".txt,.log,.json,.csv,.zip,.gz" style="display: none;"
+                            onchange="handleFileUpload(event)">
+                        <button class="button" onclick="document.getElementById('fileInput').click()">📁 Upload Log
+                            File</button>
+                        <p style="margin: 10px 0 0 0; font-size: 12px; color: #666;">
+                            Supports: .txt, .log, .json, .csv, .zip, .gz files
+                        </p>
+                        <div id="fileInfo" style="margin-top: 10px; font-size: 13px; color: #333;"></div>
+                    </div>
+
+                    <button class="button secondary" onclick="toggleSampleLogs()">Show Sample Logs</button>
+                    <div id="sampleLogs" class="sample-logs">
+                        <strong>Sample System Logs:</strong><br>
+                        2024-07-24 08:00:01 [INFO] System startup initiated<br>
+                        2024-07-24 08:00:05 [INFO] Database connection established<br>
+                        2024-07-24 08:00:10 [INFO] Web server started on port 8080<br>
+                        2024-07-24 08:15:23 [WARN] High memory usage detected: 85%<br>
+                        2024-07-24 08:30:45 [ERROR] Failed to process user request: timeout<br>
+                        2024-07-24 08:30:46 [ERROR] Database query timeout after 30s<br>
+                        2024-07-24 08:31:12 [INFO] Request retry successful<br>
+                        2024-07-24 09:45:33 [ERROR] Disk space low: 5% remaining<br>
+                        2024-07-24 09:45:34 [CRITICAL] System performance degraded<br>
+                        2024-07-24 10:00:01 [INFO] Scheduled backup completed<br>
+                        2024-07-24 10:15:22 [WARN] Unusual traffic spike detected<br>
+                        2024-07-24 10:15:23 [WARN] Rate limiting activated<br>
+                        2024-07-24 10:30:45 [ERROR] Authentication service unavailable<br>
+                        2024-07-24 11:00:12 [INFO] System health check passed
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <label for="sensitivity">Anomaly Detection Sensitivity:</label>
+                    <select id="sensitivity">
+                        <option value="low">Low (Conservative)</option>
+                        <option value="medium" selected>Medium (Balanced)</option>
+                        <option value="high">High (Aggressive)</option>
+                    </select>
+                </div>
+
+                <div class="input-section">
+                    <label for="timeWindow">Analysis Time Window:</label>
+                    <select id="timeWindow">
+                        <option value="1">Last 1 hour</option>
+                        <option value="6">Last 6 hours</option>
+                        <option value="24" selected>Last 24 hours</option>
+                        <option value="168">Last 7 days</option>
+                    </select>
+                </div>
+
+                <button class="button" onclick="analyzeLogs()">🔍 Analyze Logs</button>
+                <button class="button secondary" onclick="clearResults()">🗑️ Clear Results</button>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">📊</span>Analysis Summary</h2>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Analyzing logs and detecting anomalies...</p>
+                </div>
+
+                <div id="summaryStats" class="summary-stats"></div>
+
+                <div id="keyFindings">
+                    <p style="color: #666; text-align: center; padding: 40px 0;">
+                        📋 Run analysis to see key findings and insights
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-grid" id="resultsGrid" style="display: none;">
+            <div class="result-card">
+                <h3>🚨 Detected Anomalies</h3>
+                <div id="anomaliesList"></div>
+            </div>
+
+            <div class="result-card">
+                <h3>📈 Log Patterns & Trends</h3>
+                <div id="patternsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class LogAnalyzer {
+            constructor() {
+                this.logEntries = [];
+                this.patterns = new Map();
+                this.anomalies = [];
+                this.stats = {};
+                this.supportedFormats = ['txt', 'log', 'json', 'csv'];
+            }
+
+            async parseLogFromFile(file) {
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+                let content = '';
+
+                try {
+                    if (fileExtension === 'json') {
+                        content = await this.parseJSONLog(file);
+                    } else if (fileExtension === 'csv') {
+                        content = await this.parseCSVLog(file);
+                    } else if (['txt', 'log'].includes(fileExtension)) {
+                        content = await this.readTextFile(file);
+                    } else {
+                        throw new Error(`Unsupported file format: ${fileExtension}`);
+                    }
+
+                    return content;
+                } catch (error) {
+                    throw new Error(`Error parsing file: ${error.message}`);
+                }
+            }
+
+            async readTextFile(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = (e) => reject(new Error('Failed to read file'));
+                    reader.readAsText(file);
+                });
+            }
+
+            async parseJSONLog(file) {
+                const text = await this.readTextFile(file);
+                try {
+                    const jsonData = JSON.parse(text);
+
+                    // Handle different JSON log formats
+                    if (Array.isArray(jsonData)) {
+                        return this.convertJSONArrayToLogFormat(jsonData);
+                    } else if (jsonData.logs && Array.isArray(jsonData.logs)) {
+                        return this.convertJSONArrayToLogFormat(jsonData.logs);
+                    } else {
+                        // Single log entry
+                        return this.convertJSONArrayToLogFormat([jsonData]);
+                    }
+                } catch (error) {
+                    throw new Error('Invalid JSON format');
+                }
+            }
+
+            convertJSONArrayToLogFormat(jsonArray) {
+                return jsonArray.map(entry => {
+                    const timestamp = entry.timestamp || entry.time || entry.date || new Date().toISOString();
+                    const level = (entry.level || entry.severity || entry.type || 'INFO').toUpperCase();
+                    const message = entry.message || entry.msg || entry.description || JSON.stringify(entry);
+
+                    return `${timestamp} [${level}] ${message}`;
+                }).join('\n');
+            }
+
+            async parseCSVLog(file) {
+                const text = await this.readTextFile(file);
+                const lines = text.split('\n');
+                const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+
+                // Find relevant columns
+                const timestampCol = headers.findIndex(h => h.includes('time') || h.includes('date'));
+                const levelCol = headers.findIndex(h => h.includes('level') || h.includes('severity') || h.includes('type'));
+                const messageCol = headers.findIndex(h => h.includes('message') || h.includes('msg') || h.includes('description'));
+
+                const logEntries = [];
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim()) {
+                        const cols = lines[i].split(',');
+                        const timestamp = timestampCol >= 0 ? cols[timestampCol]?.trim() : new Date().toISOString();
+                        const level = levelCol >= 0 ? cols[levelCol]?.trim().toUpperCase() : 'INFO';
+                        const message = messageCol >= 0 ? cols[messageCol]?.trim() : cols.join(' ');
+
+                        logEntries.push(`${timestamp} [${level}] ${message}`);
+                    }
+                }
+
+                return logEntries.join('\n');
+            }
+
+            parseLog(logText) {
+                const lines = logText.split('\n').filter(line => line.trim());
+                this.logEntries = [];
+
+                const logRegex = /^(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\s+\[(\w+)\]\s+(.+)/;
+
+                lines.forEach((line, index) => {
+                    const match = line.match(logRegex);
+                    if (match) {
+                        this.logEntries.push({
+                            timestamp: new Date(match[1]),
+                            level: match[2].toUpperCase(),
+                            message: match[3],
+                            raw: line,
+                            index: index
+                        });
+                    } else if (line.trim()) {
+                        // Handle non-standard log formats
+                        this.logEntries.push({
+                            timestamp: new Date(),
+                            level: 'UNKNOWN',
+                            message: line,
+                            raw: line,
+                            index: index
+                        });
+                    }
+                });
+            }
+
+            calculateStats() {
+                const levels = {};
+                const timeDistribution = {};
+                let totalErrors = 0;
+                let criticalEvents = 0;
+
+                this.logEntries.forEach(entry => {
+                    // Count by level
+                    levels[entry.level] = (levels[entry.level] || 0) + 1;
+
+                    // Count errors and critical events
+                    if (['ERROR', 'CRITICAL', 'FATAL'].includes(entry.level)) {
+                        totalErrors++;
+                    }
+                    if (entry.level === 'CRITICAL') {
+                        criticalEvents++;
+                    }
+
+                    // Time distribution
+                    const hour = entry.timestamp.getHours();
+                    timeDistribution[hour] = (timeDistribution[hour] || 0) + 1;
+                });
+
+                this.stats = {
+                    totalEntries: this.logEntries.length,
+                    levels: levels,
+                    errorRate: ((totalErrors / this.logEntries.length) * 100).toFixed(1),
+                    criticalEvents: criticalEvents,
+                    timeDistribution: timeDistribution,
+                    timeSpan: this.getTimeSpan()
+                };
+            }
+
+            getTimeSpan() {
+                if (this.logEntries.length === 0) return 'No data';
+
+                const timestamps = this.logEntries.map(e => e.timestamp).sort();
+                const start = timestamps[0];
+                const end = timestamps[timestamps.length - 1];
+
+                const diffMs = end - start;
+                const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+
+                return diffHours > 0 ? `${diffHours} hours` : 'Less than 1 hour';
+            }
+
+            detectPatterns() {
+                this.patterns.clear();
+
+                // Pattern detection based on message content
+                this.logEntries.forEach(entry => {
+                    // Extract key patterns
+                    const patterns = this.extractPatterns(entry.message);
+
+                    patterns.forEach(pattern => {
+                        if (!this.patterns.has(pattern)) {
+                            this.patterns.set(pattern, {
+                                count: 0,
+                                levels: new Set(),
+                                examples: [],
+                                timestamps: []
+                            });
+                        }
+
+                        const patternData = this.patterns.get(pattern);
+                        patternData.count++;
+                        patternData.levels.add(entry.level);
+                        patternData.timestamps.push(entry.timestamp);
+
+                        if (patternData.examples.length < 3) {
+                            patternData.examples.push(entry.message);
+                        }
+                    });
+                });
+            }
+
+            extractPatterns(message) {
+                const patterns = [];
+
+                // Common error patterns
+                if (message.match(/connection.*failed|failed.*connect/i)) {
+                    patterns.push('Connection Failures');
+                }
+                if (message.match(/timeout|timed out/i)) {
+                    patterns.push('Timeout Events');
+                }
+                if (message.match(/memory|mem|ram/i)) {
+                    patterns.push('Memory Issues');
+                }
+                if (message.match(/disk|storage|space/i)) {
+                    patterns.push('Storage Issues');
+                }
+                if (message.match(/database|db|sql/i)) {
+                    patterns.push('Database Operations');
+                }
+                if (message.match(/auth|login|credential/i)) {
+                    patterns.push('Authentication Events');
+                }
+                if (message.match(/network|net|tcp|udp/i)) {
+                    patterns.push('Network Events');
+                }
+                if (message.match(/backup|restore/i)) {
+                    patterns.push('Backup Operations');
+                }
+
+                return patterns.length > 0 ? patterns : ['General Activity'];
+            }
+
+            detectAnomalies(sensitivity = 'medium') {
+                this.anomalies = [];
+
+                const thresholds = {
+                    low: { errorBurst: 5, timeGap: 3600000, repeatThreshold: 10 },
+                    medium: { errorBurst: 3, timeGap: 1800000, repeatThreshold: 5 },
+                    high: { errorBurst: 2, timeGap: 900000, repeatThreshold: 3 }
+                };
+
+                const config = thresholds[sensitivity];
+
+                // Detect error bursts
+                this.detectErrorBursts(config.errorBurst);
+
+                // Detect unusual time gaps
+                this.detectTimeGaps(config.timeGap);
+
+                // Detect repeated patterns
+                this.detectRepeatedPatterns(config.repeatThreshold);
+
+                // Detect severity escalations
+                this.detectSeverityEscalations();
+
+                // Sort anomalies by severity score
+                this.anomalies.sort((a, b) => b.score - a.score);
+            }
+
+            detectErrorBursts(threshold) {
+                let errorCount = 0;
+                let windowStart = 0;
+                const windowSize = 5 * 60 * 1000; // 5 minutes
+
+                for (let i = 0; i < this.logEntries.length; i++) {
+                    const entry = this.logEntries[i];
+
+                    if (['ERROR', 'CRITICAL', 'FATAL'].includes(entry.level)) {
+                        errorCount++;
+
+                        // Check if we have enough errors in the time window
+                        if (errorCount >= threshold) {
+                            const startTime = this.logEntries[Math.max(0, i - threshold)].timestamp;
+                            const endTime = entry.timestamp;
+
+                            if (endTime - startTime <= windowSize) {
+                                this.anomalies.push({
+                                    type: 'Error Burst',
+                                    description: `${errorCount} errors in ${Math.round((endTime - startTime) / 60000)} minutes`,
+                                    timestamp: entry.timestamp,
+                                    score: Math.min(errorCount * 10, 100),
+                                    entries: this.logEntries.slice(Math.max(0, i - threshold), i + 1)
+                                });
+                            }
+                        }
+                    } else {
+                        errorCount = Math.max(0, errorCount - 1);
+                    }
+                }
+            }
+
+            detectTimeGaps(threshold) {
+                for (let i = 1; i < this.logEntries.length; i++) {
+                    const gap = this.logEntries[i].timestamp - this.logEntries[i - 1].timestamp;
+
+                    if (gap > threshold) {
+                        this.anomalies.push({
+                            type: 'Time Gap',
+                            description: `${Math.round(gap / 60000)} minute gap in logging`,
+                            timestamp: this.logEntries[i].timestamp,
+                            score: Math.min(gap / 60000, 80),
+                            entries: [this.logEntries[i - 1], this.logEntries[i]]
+                        });
+                    }
+                }
+            }
+
+            detectRepeatedPatterns(threshold) {
+                this.patterns.forEach((data, pattern) => {
+                    if (data.count >= threshold && pattern !== 'General Activity') {
+                        const hasErrors = Array.from(data.levels).some(level =>
+                            ['ERROR', 'CRITICAL', 'FATAL'].includes(level)
+                        );
+
+                        if (hasErrors) {
+                            this.anomalies.push({
+                                type: 'Repeated Pattern',
+                                description: `"${pattern}" occurred ${data.count} times`,
+                                timestamp: data.timestamps[data.timestamps.length - 1],
+                                score: Math.min(data.count * 5, 70),
+                                pattern: pattern,
+                                examples: data.examples
+                            });
+                        }
+                    }
+                });
+            }
+
+            detectSeverityEscalations() {
+                const severityMap = { 'INFO': 1, 'WARN': 2, 'ERROR': 3, 'CRITICAL': 4, 'FATAL': 5 };
+
+                for (let i = 1; i < this.logEntries.length; i++) {
+                    const prevSeverity = severityMap[this.logEntries[i - 1].level] || 0;
+                    const currSeverity = severityMap[this.logEntries[i].level] || 0;
+
+                    if (currSeverity - prevSeverity >= 2) {
+                        this.anomalies.push({
+                            type: 'Severity Escalation',
+                            description: `Escalation from ${this.logEntries[i - 1].level} to ${this.logEntries[i].level}`,
+                            timestamp: this.logEntries[i].timestamp,
+                            score: (currSeverity - prevSeverity) * 15,
+                            entries: [this.logEntries[i - 1], this.logEntries[i]]
+                        });
+                    }
+                }
+            }
+
+            generateSummary() {
+                const topPatterns = Array.from(this.patterns.entries())
+                    .sort((a, b) => b[1].count - a[1].count)
+                    .slice(0, 5);
+
+                return {
+                    stats: this.stats,
+                    topAnomalies: this.anomalies.slice(0, 10),
+                    topPatterns: topPatterns,
+                    recommendations: this.generateRecommendations()
+                };
+            }
+
+            generateRecommendations() {
+                const recommendations = [];
+
+                if (parseFloat(this.stats.errorRate) > 10) {
+                    recommendations.push('High error rate detected - investigate root causes');
+                }
+
+                if (this.stats.criticalEvents > 0) {
+                    recommendations.push('Critical events found - immediate attention required');
+                }
+
+                this.patterns.forEach((data, pattern) => {
+                    if (data.count > 5 && Array.from(data.levels).includes('ERROR')) {
+                        recommendations.push(`Recurring ${pattern.toLowerCase()} - consider systematic fix`);
+                    }
+                });
+
+                return recommendations;
+            }
+        }
+
+        let analyzer = new LogAnalyzer();
+
+        function toggleSampleLogs() {
+            const sampleDiv = document.getElementById('sampleLogs');
+            const isVisible = sampleDiv.style.display === 'block';
+            sampleDiv.style.display = isVisible ? 'none' : 'block';
+
+            if (!isVisible) {
+                document.getElementById('logInput').value = `2024-07-24 08:00:01 [INFO] System startup initiated
+2024-07-24 08:00:05 [INFO] Database connection established
+2024-07-24 08:00:10 [INFO] Web server started on port 8080
+2024-07-24 08:15:23 [WARN] High memory usage detected: 85%
+2024-07-24 08:30:45 [ERROR] Failed to process user request: timeout
+2024-07-24 08:30:46 [ERROR] Database query timeout after 30s
+2024-07-24 08:31:12 [INFO] Request retry successful
+2024-07-24 09:45:33 [ERROR] Disk space low: 5% remaining
+2024-07-24 09:45:34 [CRITICAL] System performance degraded
+2024-07-24 10:00:01 [INFO] Scheduled backup completed
+2024-07-24 10:15:22 [WARN] Unusual traffic spike detected
+2024-07-24 10:15:23 [WARN] Rate limiting activated
+2024-07-24 10:30:45 [ERROR] Authentication service unavailable
+2024-07-24 11:00:12 [INFO] System health check passed`;
+            }
+        }
+
+        function analyzeLogs() {
+            const logInput = document.getElementById('logInput').value.trim();
+            if (!logInput) {
+                alert('Please enter some log data to analyze');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('summaryStats').innerHTML = '';
+            document.getElementById('keyFindings').innerHTML = '';
+
+            // Simulate processing time
+            setTimeout(() => {
+                const sensitivity = document.getElementById('sensitivity').value;
+
+                // Parse and analyze logs
+                analyzer.parseLog(logInput);
+                analyzer.calculateStats();
+                analyzer.detectPatterns();
+                analyzer.detectAnomalies(sensitivity);
+
+                const summary = analyzer.generateSummary();
+
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+
+                // Display results
+                displaySummaryStats(summary.stats);
+                displayKeyFindings(summary);
+                displayAnomalies(summary.topAnomalies);
+                displayPatterns(summary.topPatterns);
+
+                // Show results grid
+                document.getElementById('resultsGrid').style.display = 'grid';
+            }, 1500);
+        }
+
+        function displaySummaryStats(stats) {
+            const statsHtml = `
+                <div class="stat-box">
+                    <span class="stat-number">${stats.totalEntries}</span>
+                    <span class="stat-label">Total Entries</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">${stats.errorRate}%</span>
+                    <span class="stat-label">Error Rate</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">${stats.criticalEvents}</span>
+                    <span class="stat-label">Critical Events</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">${stats.timeSpan}</span>
+                    <span class="stat-label">Time Span</span>
+                </div>
+            `;
+            document.getElementById('summaryStats').innerHTML = statsHtml;
+        }
+
+        function displayKeyFindings(summary) {
+            const findings = [];
+
+            if (summary.stats.errorRate > 10) {
+                findings.push('🚨 High error rate detected');
+            }
+            if (summary.stats.criticalEvents > 0) {
+                findings.push('⚠️ Critical events found');
+            }
+            if (summary.topAnomalies.length > 0) {
+                findings.push(`🔍 ${summary.topAnomalies.length} anomalies detected`);
+            }
+
+            findings.push(...summary.recommendations.map(r => `💡 ${r}`));
+
+            if (findings.length === 0) {
+                findings.push('✅ No significant issues detected');
+            }
+
+            const findingsHtml = findings.map(f => `<div class="log-pattern">${f}</div>`).join('');
+            document.getElementById('keyFindings').innerHTML = findingsHtml;
+        }
+
+        function displayAnomalies(anomalies) {
+            if (anomalies.length === 0) {
+                document.getElementById('anomaliesList').innerHTML = '<p style="color: #666; text-align: center;">No anomalies detected</p>';
+                return;
+            }
+
+            const anomaliesHtml = anomalies.map(anomaly => `
+                <div class="anomaly-item">
+                    <strong>${anomaly.type}</strong>
+                    <span class="anomaly-score">${Math.round(anomaly.score)}</span>
+                    <br>
+                    ${anomaly.description}
+                    <br>
+                    <small>Time: ${anomaly.timestamp.toLocaleString()}</small>
+                </div>
+            `).join('');
+
+            document.getElementById('anomaliesList').innerHTML = anomaliesHtml;
+        }
+
+        function displayPatterns(patterns) {
+            if (patterns.length === 0) {
+                document.getElementById('patternsList').innerHTML = '<p style="color: #666; text-align: center;">No patterns detected</p>';
+                return;
+            }
+
+            const patternsHtml = patterns.map(([pattern, data]) => {
+                const severity = Array.from(data.levels).includes('CRITICAL') ? 'high' :
+                    Array.from(data.levels).includes('ERROR') ? 'medium' : 'low';
+
+                return `
+                    <div class="log-pattern severity-${severity}">
+                        <strong>${pattern}</strong> (${data.count} occurrences)
+                        <br>
+                        <small>Levels: ${Array.from(data.levels).join(', ')}</small>
+                        <br>
+                        <small>Example: "${data.examples[0]}"</small>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('patternsList').innerHTML = patternsHtml;
+        }
+
+        function clearResults() {
+            document.getElementById('logInput').value = '';
+            document.getElementById('summaryStats').innerHTML = '';
+            document.getElementById('keyFindings').innerHTML = '<p style="color: #666; text-align: center; padding: 40px 0;">📋 Run analysis to see key findings and insights
